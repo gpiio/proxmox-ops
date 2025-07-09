@@ -1,0 +1,4 @@
+packer/secrets.sh
+packer/packer_cache/
+packer/*.log
+packer/downloaded_iso_path/*
