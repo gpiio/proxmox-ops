@@ -7,7 +7,6 @@ packer {
   }
 }
 
-# Variable definitions
 variable "proxmox_api_url" {
   type = string
 }
@@ -46,32 +45,26 @@ variable "ubuntu_iso_checksum" {
   default = "9bc6028870aef3f74f4e16b900008179e78b130e6b0b9a140635434a46aa98b0"
 }
 
-# Load SSH public key
 locals {
   ssh_public_key = file("../keys/packer_key.pub")
 }
 
 source "proxmox-iso" "ubuntu-server" {
-  # Proxmox connection
   proxmox_url              = var.proxmox_api_url
   username                 = var.proxmox_api_token_id
   token                    = var.proxmox_api_token_secret
   insecure_skip_tls_verify = true
   node                     = var.proxmox_node
 
-  # VM General Settings
   vm_name              = "ubuntu-22-04-template"
   vm_id                = 5000
   template_description = "Ubuntu 22.04 LTS Server Template - Built with Packer"
 
-  # VM OS Settings (use pre-downloaded ISO)
   iso_file     = "local:iso/ubuntu-22.04.5-live-server-amd64.iso"
   unmount_iso  = true
 
-  # VM System Settings
   qemu_agent = true
 
-  # VM Hard Disk Settings
   scsi_controller = "virtio-scsi-pci"
   disks {
     disk_size    = "20G"
@@ -80,7 +73,6 @@ source "proxmox-iso" "ubuntu-server" {
     type         = "virtio"
   }
 
-  # VM CPU Settings
   cores = "2"
 
   # VM Memory Settings
