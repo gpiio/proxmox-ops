@@ -11,6 +11,11 @@ autoinstall:
       ethernets:
         ens18:
           dhcp4: true
+          dhcp4-overrides:
+            use-dns: false
+            use-routes: true
+          nameservers:
+            addresses: [8.8.8.8, 8.8.4.4]
   storage:
     layout:
       name: lvm
@@ -32,9 +37,11 @@ autoinstall:
     authorized-keys: []
   packages:
     - openssh-server
-    - qemu-guest-agent
   late-commands:
     - echo 'packer ALL=(ALL) NOPASSWD:ALL' > /target/etc/sudoers.d/packer
     - curtin in-target --target=/target -- systemctl enable ssh
+    - curtin in-target --target=/target -- netplan apply
+    - curtin in-target --target=/target -- apt-get update
+    - curtin in-target --target=/target -- apt-get install -y qemu-guest-agent
     - curtin in-target --target=/target -- systemctl enable qemu-guest-agent
   shutdown: reboot
