@@ -8,3 +8,6 @@ terraform/prototype/terraform.tfstate.backup
 terraform/prototype/secrets.sh
 terraform/.terraform
 terraform/.terraform.lock.hcl
+packer-pipeline/credentials-local.yml
+packer-pipelinecredentials.yml
+packer-pipeline/fly-7.8.0-linux-amd64.tgz

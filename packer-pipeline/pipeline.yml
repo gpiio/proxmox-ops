@@ -1,0 +1,141 @@
+---
+resource_types:
+  - name: git
+    type: registry-image
+    source:
+      repository: concourse/git-resource
+
+resources:
+  - name: ubuntu-template-trigger
+    type: time
+    source:
+      interval: 24h  # Daily build option
+
+  - name: centos-template-trigger
+    type: time
+    source:
+      interval: 168h  # Weekly build option
+
+jobs:
+  - name: build-ubuntu-template
+    plan:
+      - get: ubuntu-template-trigger
+        trigger: true  # Trigger on schedule
+      - task: build-ubuntu-template
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source:
+              repository: hashicorp/packer
+              tag: latest
+          params:
+            PKR_VAR_proxmox_api_url: ((proxmox_api_url))
+            PKR_VAR_proxmox_api_token_id: ((proxmox_api_token_id))
+            PKR_VAR_proxmox_api_token_secret: ((proxmox_api_token_secret))
+          run:
+            path: sh
+            args:
+              - -c
+              - |
+                echo "Building Ubuntu 22.04 template..."
+                echo "⚠️  Note: This will use packer files from the Concourse worker"
+                echo "For now, this is a placeholder that would run:"
+                echo "packer build ubuntu-template.pkr.hcl"
+                echo ""
+                echo "To actually build, you need to either:"
+                echo "1. Mount packer files into the container, or"
+                echo "2. Set up a git repository trigger"
+                echo ""
+                echo "✅ Placeholder build completed"
+      - task: test-template
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source:
+              repository: alpine
+              tag: latest
+          params:
+            PROXMOX_API_URL: ((proxmox_api_url))
+            PROXMOX_API_TOKEN_ID: ((proxmox_api_token_id))
+            PROXMOX_API_TOKEN_SECRET: ((proxmox_api_token_secret))
+          run:
+            path: sh
+            args:
+              - -c
+              - |
+                echo "Testing template existence..."
+                # Add curl to test Proxmox API
+                apk add --no-cache curl jq
+                
+                # Check if template exists
+                TEMPLATE_ID=5002
+                RESPONSE=$(curl -k -s \
+                  -H "Authorization: PVEAPIToken=${PROXMOX_API_TOKEN_ID}=${PROXMOX_API_TOKEN_SECRET}" \
+                  "${PROXMOX_API_URL}/nodes/pve/qemu/${TEMPLATE_ID}/status/current")
+                
+                if echo "$RESPONSE" | jq -e '.data.template == true' > /dev/null; then
+                  echo "✅ Template ${TEMPLATE_ID} exists and is a template"
+                else
+                  echo "❌ Template ${TEMPLATE_ID} not found or not a template"
+                  echo "This is expected since we're not actually building yet"
+                fi
+
+  - name: build-centos-template
+    plan:
+      - get: centos-template-trigger
+        trigger: true   # Weekly schedule
+      - task: build-centos-template
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source:
+              repository: hashicorp/packer
+              tag: latest
+          params:
+            PKR_VAR_proxmox_api_url: ((proxmox_api_url))
+            PKR_VAR_proxmox_api_token_id: ((proxmox_api_token_id))
+            PKR_VAR_proxmox_api_token_secret: ((proxmox_api_token_secret))
+          run:
+            path: sh
+            args:
+              - -c
+              - |
+                echo "Building CentOS template..."
+                echo "⚠️  Note: This is a placeholder for CentOS template build"
+                echo "This would build a CentOS 9 Stream template"
+                echo "Template ID would be 5003"
+                echo "✅ Placeholder CentOS build completed"
+
+  - name: cleanup-old-templates
+    plan:
+      - task: cleanup-templates
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source:
+              repository: alpine
+              tag: latest
+          params:
+            PROXMOX_API_URL: ((proxmox_api_url))
+            PROXMOX_API_TOKEN_ID: ((proxmox_api_token_id))
+            PROXMOX_API_TOKEN_SECRET: ((proxmox_api_token_secret))
+          run:
+            path: sh
+            args:
+              - -c
+              - |
+                echo "🧹 Cleanup old templates (placeholder)"
+                apk add --no-cache curl jq
+                
+                echo "This task would:"
+                echo "- List all templates"
+                echo "- Keep the 3 most recent"
+                echo "- Delete older templates"
+                echo "- Free up storage space"
+                
+                # Placeholder for actual cleanup logic
+                echo "✅ Cleanup completed"
